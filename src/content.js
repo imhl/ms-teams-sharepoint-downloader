@@ -405,6 +405,80 @@
     return true;
   }
 
+  // Derive drive id, item id and site path (/personal/... or /sites/...) from
+  // any URL we know about, plus window.location. The videomanifest URL contains
+  // the values URL-encoded inside its docid querystring parameter; the host page
+  // location gives us the site/personal path.
+  function deriveTranscriptContext() {
+    let driveId = null, itemId = null, sitePath = null;
+
+    // 1. videomanifest.docid carries the canonical _api/v2.0/drives/{id}/items/{id} path
+    if (videoManifestUrl) {
+      try {
+        const docidRaw = new URL(videoManifestUrl).searchParams.get('docid');
+        if (docidRaw) {
+          const docUrl = new URL(decodeURIComponent(docidRaw));
+          const m = docUrl.pathname.match(/^(\/(?:personal|sites)\/[^/]+)\/_api\/v[0-9.]+\/drives\/([^/]+)\/items\/([^/?]+)/);
+          if (m) { sitePath = m[1]; driveId = m[2]; itemId = m[3]; }
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    // 2. Fall back to current page path for sitePath if not yet known
+    if (!sitePath) {
+      const m = window.location.pathname.match(/^\/(?:personal|sites)\/[^/]+/);
+      if (m) sitePath = m[0];
+    }
+
+    return { driveId, itemId, sitePath };
+  }
+
+  // Fetch transcript metadata directly from /_api/v2.1/.../media/transcripts.
+  // SharePoint Stream only fires this request when the user opens the Transcript
+  // panel, so if the user clicks our Download button before doing so we have to
+  // fetch it ourselves rather than wait for the intercept hook.
+  async function fetchTranscriptUrl() {
+    const { driveId, itemId, sitePath } = deriveTranscriptContext();
+    if (!driveId || !itemId || !sitePath) {
+      console.warn('[Transcript Downloader] Cannot proactively fetch transcript metadata — missing context', { driveId, itemId, sitePath });
+      return null;
+    }
+
+    const metaUrl = `${window.location.origin}${sitePath}/_api/v2.1/drives/${driveId}/items/${itemId}/media/transcripts`;
+    console.log('[Transcript Downloader] Proactively fetching transcript metadata:', metaUrl);
+
+    const resp = await fetch(metaUrl, { credentials: 'include', headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) {
+      console.error('[Transcript Downloader] Metadata fetch failed:', resp.status, resp.statusText);
+      return null;
+    }
+    const data = await resp.json();
+
+    let transcript = null;
+    if (data && data.media && Array.isArray(data.media.transcripts) && data.media.transcripts.length > 0) {
+      transcript = data.media.transcripts[0];
+    } else if (data && Array.isArray(data.value) && data.value.length > 0 && data.value[0].temporaryDownloadUrl) {
+      transcript = data.value.find(t => t.isDefault) || data.value[0];
+    } else if (data && data.temporaryDownloadUrl) {
+      transcript = data;
+    }
+
+    if (transcript && transcript.temporaryDownloadUrl) {
+      transcriptUrl = transcript.temporaryDownloadUrl;
+      if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+        try {
+          chrome.runtime.sendMessage({
+            action: 'setTranscriptMetadata',
+            temporaryDownloadUrl: transcript.temporaryDownloadUrl
+          });
+        } catch (_) { /* main-world copy may not have chrome.runtime */ }
+      }
+      return transcriptUrl;
+    }
+    console.warn('[Transcript Downloader] Metadata response had no temporaryDownloadUrl', data);
+    return null;
+  }
+
   // Handle download button click - show format selection modal
   async function handleDownloadClick(event) {
     event.preventDefault();
@@ -412,9 +486,19 @@
 
     console.log('[Transcript Downloader] Download button clicked');
 
+    // If the intercept hook hasn't seen the metadata yet (user hasn't opened the
+    // Transcript panel), fetch it ourselves before failing.
+    if (!transcriptUrl) {
+      try {
+        await fetchTranscriptUrl();
+      } catch (e) {
+        console.error('[Transcript Downloader] Proactive metadata fetch errored:', e);
+      }
+    }
+
     // Check if we have the transcript URL
     if (!transcriptUrl) {
-      alert('Transcript URL not captured yet. Please wait a moment and try again, or refresh the page.');
+      alert('Transcript URL not captured. Open the Transcript panel on this video, then try again.');
       console.error('[Transcript Downloader] No transcript URL available');
       return;
     }

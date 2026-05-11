@@ -7,15 +7,31 @@
     const url = args[0];
     
     // Intercept transcript metadata responses; exclude the VTT content endpoint
+    // and the /cdnmedia/ variant (binary protobuf, not JSON).
     if (url && typeof url === 'string' &&
         url.includes('transcripts') &&
-        !url.includes('/content')) {
-      
+        !url.includes('/content') &&
+        !url.includes('/cdnmedia/')) {
+
       // Clone the response so we can read it
       const clone = response.clone();
       clone.json().then(data => {
-        if (data && data.media && data.media.transcripts && data.media.transcripts.length > 0) {
-          const transcript = data.media.transcripts[0];
+        if (!data) return;
+
+        // SharePoint Stream returns transcript metadata in several shapes:
+        //  - { media: { transcripts: [ { temporaryDownloadUrl, ... } ] } }   (item w/ $expand=media/transcripts)
+        //  - { value: [ { temporaryDownloadUrl, ... } ] }                    (direct /media/transcripts collection)
+        //  - { temporaryDownloadUrl, ... }                                   (single transcript)
+        let transcript = null;
+        if (data.media && Array.isArray(data.media.transcripts) && data.media.transcripts.length > 0) {
+          transcript = data.media.transcripts[0];
+        } else if (Array.isArray(data.value) && data.value.length > 0 && data.value[0].temporaryDownloadUrl) {
+          transcript = data.value.find(t => t.isDefault) || data.value[0];
+        } else if (data.temporaryDownloadUrl) {
+          transcript = data;
+        }
+
+        if (transcript && transcript.temporaryDownloadUrl) {
           window.postMessage({
             type: 'TRANSCRIPT_METADATA',
             temporaryDownloadUrl: transcript.temporaryDownloadUrl,
@@ -23,7 +39,7 @@
             languageTag: transcript.languageTag
           }, '*');
         }
-      }).catch(err => console.error('Error parsing transcript metadata:', err));
+      }).catch(err => console.error('[Transcript Downloader] Error parsing transcript metadata from', url, err));
     }
 
     // Detect videomanifest URLs for video download
