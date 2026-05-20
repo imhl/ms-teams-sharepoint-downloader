@@ -1,5 +1,7 @@
 # MS Teams / SharePoint / Stream — Video & Transcript Downloader (Chrome Extension)
 
+🌐 **Website:** [teamsvideotranscriptexporter.com](https://teamsvideotranscriptexporter.com) — features, screenshots, FAQ, install link
+
 Download videos and transcripts from MS Teams meeting recordings, SharePoint, and **Microsoft Stream** (videos uploaded to SharePoint/OneDrive and played through the Stream player) — even when the built-in download button is disabled.
 
 Works on:

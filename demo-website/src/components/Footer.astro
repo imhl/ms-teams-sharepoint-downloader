@@ -1,7 +1,10 @@
 ---
+import { getRepoStats, formatCount } from '../lib/github';
+
 const GH_URL = 'https://github.com/brendangooden/ms-teams-sharepoint-downloader';
 const CHROME_URL = 'https://chromewebstore.google.com/detail/ms-teams-transcript-downl/hmljlkhcebhkkhbbafiheolbneecoinp';
 const year = new Date().getFullYear();
+const { stars } = await getRepoStats();
 ---
 <footer class="hairline">
   <div class="mx-auto max-w-[1280px] px-6 lg:px-10 py-14">
@@ -18,7 +21,17 @@ const year = new Date().getFullYear();
       <div>
         <p class="section-num mb-4">project</p>
         <ul class="space-y-2 text-[13px]">
-          <li><a href={GH_URL} target="_blank" rel="noopener" class="lnk">Source</a></li>
+          <li>
+            <a href={GH_URL} target="_blank" rel="noopener" class="lnk inline-flex items-center gap-1.5">
+              <span>Source</span>
+              {stars > 0 && (
+                <span class="inline-flex items-center gap-1 text-yellow" aria-label={`${stars} stars`}>
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+                  <span class="text-fg-dim tabular-nums">{formatCount(stars)}</span>
+                </span>
+              )}
+            </a>
+          </li>
           <li><a href={`${GH_URL}/issues`} target="_blank" rel="noopener" class="lnk">Issues</a></li>
           <li><a href={`${GH_URL}/blob/main/LICENSE`} target="_blank" rel="noopener" class="lnk">License (MIT)</a></li>
           <li><a href={`${GH_URL}/releases`} target="_blank" rel="noopener" class="lnk">Releases</a></li>
