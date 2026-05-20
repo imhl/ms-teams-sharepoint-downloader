@@ -1,0 +1,99 @@
+name: Bug report
+description: Report a problem with the extension
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more detail you give, the more likely it gets fixed.
+
+        **Before you start:**
+        - Try reloading the page and the extension (`chrome://extensions/` → reload).
+        - Check the [Known limitations](../../blob/main/README.md#known-limitations) — DRM-protected videos and guest-account views genuinely cannot be downloaded.
+
+  - type: input
+    id: page-url
+    attributes:
+      label: Page URL pattern
+      description: |
+        Where did this happen? **Redact tenant/site/file IDs** — we only need the shape, not the actual link.
+        Example: `https://contoso.sharepoint.com/sites/<redacted>/_layouts/15/stream.aspx?id=<redacted>`
+      placeholder: "https://<tenant>.sharepoint.com/.../_layouts/15/stream.aspx?id=..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface?
+      options:
+        - SharePoint recording page
+        - Stream-on-SharePoint player (stream.aspx)
+        - OneDrive-shared MP4
+        - Teams web client (teams.microsoft.com)
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what did you get instead?
+      placeholder: |
+        1. Opened a recording on ...
+        2. Clicked "Download Video" → Audio (M4A)
+        3. Expected: a .m4a file
+        4. Got: progress bar stalled at 73% with no error
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-output
+    attributes:
+      label: Chrome console output
+      description: |
+        Open DevTools (F12) → **Console** tab. Reload the page, reproduce the bug, then copy any messages containing `[Transcript Downloader]` **and** any red errors.
+
+        Tip: type `Transcript Downloader` in the Console filter box to narrow it down.
+      render: text
+      placeholder: |
+        [Transcript Downloader] Content script loaded
+        [Transcript Downloader] Detected videomanifest URL: ...
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag-and-drop screenshots of the page, the modal, or the DevTools console. **Crop or blur anything sensitive** (names, emails, file titles).
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      description: From `chrome://extensions/` → card for this extension.
+      placeholder: "1.2.4"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser + OS
+      placeholder: "Chrome 131 on Windows 11 / Edge 130 on macOS 14"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmations
+      options:
+        - label: I checked Known limitations and this isn't a DRM-protected video or a guest-account view.
+          required: true
+        - label: I've redacted tenant/personal info from the URL, console output, and screenshots.
+          required: true

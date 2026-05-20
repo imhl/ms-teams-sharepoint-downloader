@@ -1,303 +1,150 @@
-# MS Teams / Sharepoint Video & Transcript Downloader - Chrome Extension
+# MS Teams / SharePoint / Stream — Video & Transcript Downloader (Chrome Extension)
 
-A Chrome extension that allows you to download MS Teams / Sharepoint meeting recordings (video/audio) and transcripts, even when downloads are disabled due to permissions.
+Download videos and transcripts from MS Teams meeting recordings, SharePoint, and **Microsoft Stream** (videos uploaded to SharePoint/OneDrive and played through the Stream player) — even when the built-in download button is disabled.
 
-This works for both `teams.microsoft.com` (Web Teams) and `*.sharepoint.com` meeting recording links.
+Works on:
+
+- `teams.microsoft.com` and `teams.cloud.microsoft` (Teams web client)
+- `*.sharepoint.com` meeting-recording links
+- `*.sharepoint.com/.../_layouts/15/stream.aspx` — the Stream-on-SharePoint player (any MP4 someone uploaded to SharePoint or OneDrive and shared)
+
+> **About Microsoft Stream:** Microsoft retired the standalone *Stream (Classic)* product at `web.microsoftstream.com` in early 2024. The current *Stream (on SharePoint)* product reuses the same player whenever an MP4 lives on SharePoint or OneDrive, so this extension covers it automatically.
 
 ## Features
 
-### Video/Audio Download
-- 🎬 **Video Download**: Adds a "Download Video" button to the top command bar
-- 🌐 **Browser Download**: Download Video+Audio, Audio (M4A), or Video Only directly in the browser — no extra tools needed
-- 🔧 **CLI Options**: ffmpeg and yt-dlp tabs available for power users needing MP3/WAV or parallel downloads
-- 🎵 **5 Format Options**: Video + Audio (.mp4), Audio Only (.m4a, .mp3, .wav), Video Only (.mp4)
-- ✏️ **Editable Filename**: Auto-detected from page title, fully customizable
+### Video / Audio download
+- **In-browser download** — Video+Audio (MP4), Audio Only (M4A), or Video Only. No extra tools needed.
+- **CLI fallback** — ffmpeg and yt-dlp tabs generate ready-to-paste commands for power users who want MP3/WAV or to drive the download from a terminal.
+- **Editable filename** — auto-derived from the page title.
+- **Floating banner widget** as a fallback for when the SharePoint command bar re-renders or hides the button.
 
-### Transcript Download
-- 🎙️ **Automatic Detection**: Detects when you're viewing a Teams transcript
-- 📥 **Multiple Formats**: Download transcripts as RAW JSON, VTT, or Grouped VTT
-- 👤 **Speaker Names**: Preserves speaker display names in all formats
-- 🔍 **Live Previews**: Preview transcript in each format before downloading
-- 💾 **Easy Download**: Adds a custom "Download Transcript" button to the transcript panel
-- 🎨 **Format Selection**: Choose your preferred format in the modal dialog — your last selection is remembered as the default
+### Transcript download
+- **Automatic detection** — the extension watches for the transcript metadata call and adds a Download Transcript button.
+- **Three formats** — RAW JSON, standard WebVTT, or Grouped VTT (consecutive lines from the same speaker collapsed into a block).
+- **Live preview** of each format in the modal.
+- **Last-used format remembered** across sessions.
+- Clear dialog if the meeting was never transcribed, instead of a silent failure.
 
 ## Screenshots
 
-### Video Download Modal — Browser Download
+### Video download modal
 
 ![Video Download in Browser](screenshots/Example_Browser.png)
 
-Select a format and download directly in the browser. For MP3/WAV or CLI-based downloads, switch to the ffmpeg or yt-dlp tabs.
+### Teams / SharePoint recording page
 
-### Teams Recording Page
+![Recording Webpage](screenshots/teams_recording_webpage.png)
 
-![Teams Recording Webpage](screenshots/teams_recording_webpage.png)
+### Transcript format modal
 
-The extension adds a "Download Video" button in the top command bar and a "Download Transcript" button in the transcript panel.
+![Format Selection Modal](screenshots/modal_popup_download_options.png)
 
 ## Installation
 
-### Method 1: Load Unpacked Extension (Development)
+### Method 1 — Chrome Web Store
 
-1. **Download or Clone** this repository to your local machine
+Open <https://chromewebstore.google.com/detail/ms-teams-transcript-downl/hmljlkhcebhkkhbbafiheolbneecoinp> and click **Add to Chrome**.
 
-2. **Open Chrome Extensions Page**:
-   - Navigate to `chrome://extensions/`
-   - Or click the three-dot menu → More Tools → Extensions
+### Method 2 — Load unpacked (development)
 
-3. **Enable Developer Mode**:
-   - Toggle the "Developer mode" switch in the top-right corner
-
-4. **Load the Extension**:
-   - Click "Load unpacked"
-   - Navigate to the `src` folder in this repository
-   - Select the folder and click "Select Folder"
-
-5. **Verify Installation**:
-   - You should see "MS Teams Transcript Downloader" in your extensions list
-   - The extension icon should appear in your Chrome toolbar
-
-### Method 2: Install from Chrome Webstore
-
-1. **Open Extension Page**: 
-   - Navigate to https://chromewebstore.google.com/detail/ms-teams-transcript-downl/hmljlkhcebhkkhbbafiheolbneecoinp 
-   - Click on `Add to Chrome`
+1. Clone or download this repository.
+2. Open `chrome://extensions/`.
+3. Toggle **Developer mode** on (top right).
+4. Click **Load unpacked** and select the `src/` folder.
+5. You should see **MS Teams Video & Transcript Downloader** in the list.
 
 ## Usage
 
-### Downloading Video/Audio
+### Downloading video / audio
 
-1. **Navigate to a Teams Meeting Recording**:
-   - Open a MS Teams meeting recording on SharePoint
-   - A red **"Download Video"** button appears in the top command bar
+1. Open any meeting recording or shared MP4 in Teams, SharePoint, or the Stream-on-SharePoint player.
+2. Click the red **Download Video** button in the command bar (or in the floating banner at the top of the page).
+3. The modal opens on the **Download** tab — pick a format and click **Download**.
+4. *Optional:* switch to the **ffmpeg** or **yt-dlp** tab for MP3/WAV or to drive the download from your terminal. CLI commands embed a short-lived auth token, so generate and run them promptly.
 
-2. **Click "Download Video"**:
-   - A modal dialog opens with the **Download** tab selected by default
+### Downloading the transcript
 
-3. **Browser Download** (recommended):
-   - Select a format: Video + Audio (.mp4), Audio M4A, or Video Only
-   - Click the **Download** button — the file downloads directly in your browser
-   - A progress bar shows download status
+1. Open the **Transcript** tab on a recording.
+2. Click **Download Transcript** in the transcript panel (or in the floating banner).
+3. Pick a format in the modal and click **Download**.
 
-4. **CLI Download** (optional — for power users):
-   - Switch to the **ffmpeg** or **yt-dlp** tab for additional formats (MP3, WAV) or CLI-based downloads
-   - Select a format, then click **Copy Command** and paste into your terminal
+Your last-used format is remembered as the default.
 
-   > **Note**: CLI commands contain a temporary auth token in the URL that will expire. Generate and use the command promptly.
-
-### Downloading Transcripts
-
-1. **Navigate to a Teams Meeting Recording**:
-   - Open a MS Teams meeting recording that has a transcript
-   - Click on the "Transcript" tab to view the transcript
-
-2. **Wait for the Extension**:
-   - The extension automatically detects the transcript page
-   - It intercepts MS Teams API calls to capture the transcript metadata
-   - A purple **"Download Transcript"** button appears in the transcript panel
-
-3. **Download the Transcript**:
-   - Click the **"Download Transcript"** button
-   - A modal dialog appears with three format options and live previews
-   - Choose your preferred format:
-     - **RAW JSON**: Original API response with full metadata and speaker names
-     - **VTT**: Standard WebVTT format with speaker labels and timestamps
-     - **Grouped VTT**: Text format with consecutive messages grouped by speaker
-   - Click "Download" to save the transcript
-
-   ![Format Selection Modal](screenshots/modal_popup_download_options.png)
-
-4. **Default Format**:
-   - The modal opens with your last-used format pre-selected (first run: Grouped VTT).
-   - Pick a different format in the modal whenever you want; it becomes the new default automatically.
-
-## How It Works
-
-### Architecture
+## File structure
 
 ```
-┌─────────────────────────────────┐
-│  MS Teams / SharePoint Page     │
-│  (iframe embedded in main page) │
-└────────┬────────────────────────┘
-         │
-         │ 1. Fetch API calls intercepted
-         ▼
-┌─────────────────────────────────┐
-│  intercept.js (MAIN world)      │
-│  - Intercepts fetch() calls     │
-│  - Captures transcript metadata │
-│  - Detects videomanifest URLs   │
-│  - Reads g_fileInfo fallback    │
-│  - Posts to window              │
-└────────┬────────────────────────┘
-         │
-         │ 2. postMessage (TRANSCRIPT_METADATA / VIDEO_MANIFEST_URL)
-         ▼
-┌─────────────────────────────────┐
-│  content.js (ISOLATED world)    │
-│  - Receives transcript URL      │
-│  - Receives video manifest URL  │
-│  - Injects Download buttons     │
-│  - Handles format conversion    │
-│  - Shows transcript format modal│
-│  - Shows video download modal   │
-│  - Generates ffmpeg/yt-dlp cmds │
-└────────┬────────────────────────┘
-         │
-         │ 3. Transcript: Fetch with ?format=json
-         │    Video: User runs ffmpeg/yt-dlp command
-         ▼
-┌─────────────────────────────────┐
-│  MS Teams API / SharePoint CDN  │
-│  - temporaryDownloadUrl (JSON)  │
-│  - videomanifest (DASH stream)  │
-└─────────────────────────────────┘
-```
-
-### API Interception
-
-**Transcripts**: The extension intercepts MS Teams API calls to the transcript metadata endpoint:
-```
-/_api/v2.1/drives/{driveId}/items/{itemId}/media/transcripts
-```
-
-This endpoint returns a `temporaryDownloadUrl` which can be used to fetch the transcript:
-- `temporaryDownloadUrl` (default): Returns WebVTT format
-- `temporaryDownloadUrl?format=json`: Returns JSON with full metadata
-
-**Video**: The extension detects `videomanifest` URLs from fetch requests or extracts them from the `g_fileInfo` global variable. These DASH manifest URLs are used to generate ffmpeg/yt-dlp commands for downloading.
-
-### Format Conversion
-
-1. **RAW JSON**: Direct download from API with `?format=json` parameter
-   - Contains: `entries[]` with `speakerDisplayName`, `startOffset`, `endOffset`, `text`, `id`
-   
-2. **VTT**: Converted from JSON
-   - Standard WebVTT format with timestamps
-   - Cue identifiers use speaker IDs
-   - Speaker names in NOTE comments
-   
-3. **Grouped VTT**: Converted from JSON
-   - Groups consecutive messages by the same speaker
-   - Format: `Speaker Name:\nMessage 1\nMessage 2\n\n`
-   - Preserves chronological order
-
-## Files Structure
-
-```
-chrome-extension/
-├── manifest.json       # Extension configuration (Manifest V3)
-├── intercept.js        # Fetch interceptor (MAIN world, runs at document_start)
-├── content.js          # Main extension logic + floating widget (ISOLATED world)
-├── modal.css           # Format selection modal styles
+src/
+├── manifest.json   # MV3 — intercept.js runs MAIN/document_start, content.js runs ISOLATED/document_idle
+├── intercept.js    # fetch() interceptor — captures transcript + video manifest URLs and auth tokens
+├── content.js      # UI, transcript flow, video download, modals, floating widget
+├── modal.css       # Styles
 └── icons/
-    └── icon128.svg     # Extension icon
 ```
 
 ## Permissions
 
-The extension requires the following permissions:
-
-- **`storage`**: To store user's format preferences
-- **Host permissions**: Access to `teams.microsoft.com` and `*.sharepoint.com` where Teams transcripts are hosted
-- **Content Script MAIN world**: To intercept fetch() calls in the page context
+- `storage` — remember the user's last-used transcript format.
+- Host permissions on `teams.microsoft.com`, `teams.cloud.microsoft`, and `*.sharepoint.com`.
 
 ## Troubleshooting
 
-### Button Doesn't Appear
+### Buttons don't appear
+1. Refresh the page after installing.
+2. Open DevTools (F12) → Console and look for `[Transcript Downloader]` messages.
+3. Verify the URL is on `teams.microsoft.com`, `teams.cloud.microsoft`, or `*.sharepoint.com`.
+4. Wait a few seconds — the transcript metadata call may not have fired yet.
 
-1. **Refresh the page** after installing the extension
-2. **Check the console** (F12) for error messages (look for `[MS Teams Transcript]` logs)
-3. **Verify** you're on a Teams transcript page (URL should contain `teams.microsoft.com` or `sharepoint.com`)
-4. **Wait a few seconds** - the button is injected after the API call is intercepted
+### Download fails
+1. Check the console for errors.
+2. Verify the video / transcript actually plays in the native UI.
+3. Refresh the page (auth tokens are short-lived) and try again.
+4. Confirm you have permission to view the content.
 
-### Download Fails
+### Extension not working
+1. Reload it from `chrome://extensions/`.
+2. Clear cache and reload the SharePoint/Teams page.
 
-1. **Check the browser console** for error messages
-2. **Verify** the transcript has loaded properly in the Teams UI
-3. **Try refreshing** the transcript page to trigger a new API call
-4. **Check** that you have permission to view the transcript
+## Privacy & security
 
-### Modal Doesn't Show
+- All processing happens locally in the browser — no data is sent to any external server.
+- No tracking, no analytics.
+- Open source.
+- The extension only uses the same Microsoft URLs the native player already calls.
 
-1. **Check console** for errors during format conversion
-2. **Verify** the JSON data was captured (check console logs)
-3. **Try clicking** the Download button again
+## Known limitations
 
-### Extension Not Working
-
-1. **Reload the extension**:
-   - Go to `chrome://extensions/`
-   - Click the reload icon on the extension card
-2. **Check Developer Mode** is enabled
-3. **Clear browser cache** and reload the Teams page
-4. **Check** that both `intercept.js` and `content.js` are loading (F12 → Sources tab)
-
-## Privacy & Security
-
-- ✅ **No data is sent to external servers** - all processing happens locally in your browser
-- ✅ **No tracking or analytics**
-- ✅ **Open source** - review the code yourself
-- ✅ Uses MS Teams' official API endpoints (temporaryDownloadUrl)
-
-## Development
-
-### Testing
-
-1. Load the extension in Chrome
-2. Navigate to a Teams meeting with transcript
-3. Open DevTools (F12) and check the Console
-4. Look for `[MS Teams Transcript Downloader]` log messages
-
-### Debugging
-
-Enable verbose logging in the console:
-1. Open the Teams transcript page
-2. Press F12 to open DevTools
-3. Go to Console tab
-4. Look for `[MS Teams Transcript]` messages
-5. Debug-level logs show detailed format conversion info
-6. Check Network tab for API calls to `/transcripts` endpoints
-
-## Known Limitations
-
-- Only works on Teams transcripts/recordings accessible via the web interface
-- Requires the transcript API call to be intercepted (happens when viewing the transcript)
-- Cannot bypass access restrictions — only works if you can view the content
-- Chrome/Edge only (Manifest V3)
-- Must have the Transcript tab open for transcript detection
-- MP3 and WAV formats require **ffmpeg** or **yt-dlp** installed locally (browser download supports MP4 and M4A)
-- Video manifest URLs contain temporary auth tokens that expire after a period
+- Chrome / Edge only (Manifest V3).
+- Only works when you can actually view the content in the native UI — it cannot bypass access restrictions.
+- MP3 / WAV require ffmpeg or yt-dlp installed locally (the browser path covers MP4 and M4A).
 
 ### Will NOT work in these scenarios
 
-- **DRM-protected videos.** Microsoft has begun encrypting some SharePoint Stream videos (segment URLs contain `enableEncryption=1`). The bytes are AES-encrypted and can only be decrypted by the browser's built-in DRM module during playback. Neither this extension, nor ffmpeg, nor yt-dlp can produce a playable file — the extension will detect this and show a "DRM-protected" dialog. There is no legitimate workaround.
-- **Guest / unauthenticated viewers.** If you're viewing a video as a guest or external user (the SharePoint console shows `Anonymous or Email authenticated Guest User may not request tokens`), the CDN often refuses the cross-origin segment fetches the extension needs to make. The native player may still work via the browser's DRM path, but the extension cannot replicate it. Sign in as a member of the owning tenant if possible, or ask the owner to share the file directly via OneDrive.
+- **DRM-protected videos.** Microsoft DRM-protects some recordings; the bytes can only be decrypted by the browser's built-in DRM module during playback. Neither this extension nor ffmpeg / yt-dlp can produce a playable file. The extension detects this and shows a clear dialog rather than producing a broken download.
+- **Guest / unauthenticated viewers.** When SharePoint refuses to mint tokens for guests, the segment downloads fail even though the native player still plays the video. Sign in as a tenant member, or ask the owner to share the file directly via OneDrive.
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT — see `LICENSE`.
+
+## Reporting bugs
+
+Open an issue on GitHub and pick the **Bug report** template. It asks for the things that actually help diagnose problems:
+
+- Page URL **pattern** (redact tenant/file IDs — only the shape is needed)
+- Chrome DevTools console output (F12 → Console → filter by `Transcript Downloader`)
+- Screenshots of the page, the modal, or the console
+- Extension version and browser/OS
+
+Please redact tenant names, file titles, attendee names, etc. before posting.
 
 ## Contributing
 
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## Support
-
-If you encounter issues:
-1. Check the troubleshooting section above
-2. Review the browser console for errors
-3. Open an issue on GitHub with details
+Pull requests welcome.
 
 ## Credits
 
-Created as a tool to help access your own Teams meeting transcripts and recordings when download is disabled due to organizational permissions.
+Built to help people access their own Teams / SharePoint / Stream recordings and transcripts when the built-in download button is disabled by org policy.
 
 ---
 
-**Note**: This tool is intended for accessing your own meeting transcripts and recordings. Please respect copyright and privacy policies when using this extension.
+**Note:** Intended for accessing your own meeting recordings and transcripts. Respect copyright and privacy policies.
