@@ -19,7 +19,7 @@ This works for both `teams.microsoft.com` (Web Teams) and `*.sharepoint.com` mee
 - 👤 **Speaker Names**: Preserves speaker display names in all formats
 - 🔍 **Live Previews**: Preview transcript in each format before downloading
 - 💾 **Easy Download**: Adds a custom "Download Transcript" button to the transcript panel
-- 🎨 **Format Selection**: Choose your preferred format via extension popup or modal dialog
+- 🎨 **Format Selection**: Choose your preferred format in the modal dialog — your last selection is remembered as the default
 
 ## Screenshots
 
@@ -107,12 +107,9 @@ The extension adds a "Download Video" button in the top command bar and a "Downl
 
    ![Format Selection Modal](screenshots/modal_popup_download_options.png)
 
-4. **Set Default Format** (Optional):
-   - Click the extension icon in the Chrome toolbar
-   - Select your preferred default format
-   - Future downloads will skip the modal and use your preference
-
-   ![Extension Options Popup](screenshots/options_popup.png)
+4. **Default Format**:
+   - The modal opens with your last-used format pre-selected (first run: Grouped VTT).
+   - Pick a different format in the modal whenever you want; it becomes the new default automatically.
 
 ## How It Works
 
@@ -192,11 +189,8 @@ This endpoint returns a `temporaryDownloadUrl` which can be used to fetch the tr
 chrome-extension/
 ├── manifest.json       # Extension configuration (Manifest V3)
 ├── intercept.js        # Fetch interceptor (MAIN world, runs at document_start)
-├── content.js          # Main extension logic (ISOLATED world, runs at document_idle)
-├── background.js       # Background service worker (stores transcript metadata)
+├── content.js          # Main extension logic + floating widget (ISOLATED world)
 ├── modal.css           # Format selection modal styles
-├── popup.html          # Extension popup UI
-├── popup.js            # Popup logic (format preferences)
 └── icons/
     └── icon128.svg     # Extension icon
 ```
