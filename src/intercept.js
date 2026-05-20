@@ -30,22 +30,11 @@
   }
   function extractSpopActoken(args) { return extractHeader(args, 'x-spopactoken'); }
   function extractAuthorization(args) { return extractHeader(args, 'authorization'); }
-  
-  // Log the first oneDrive.transcode segment URL the player fetches so we can
-  // compare it against the URL our extension constructs from the manifest XML.
-  // Diagnostic only — helps diagnose 404/CORS failures on segment downloads.
-  let loggedSegmentUrl = false;
 
   window.fetch = async function(...args) {
     const response = await originalFetch.apply(this, args);
     const url = args[0];
 
-    if (!loggedSegmentUrl && url && typeof url === 'string' &&
-        url.includes('oneDrive.transcode') && url.includes('type=segment')) {
-      loggedSegmentUrl = true;
-      console.log('[Transcript Downloader] Player segment URL (for diagnostics):', url);
-    }
-    
     // Capture the SharePoint Stream API bearer token whenever the player hits a
     // `/_api/v2.x/...` endpoint on this host. The same token authenticates
     // transcript-metadata calls our extension makes proactively, and it works

@@ -4,7 +4,7 @@
 (function() {
   'use strict';
 
-  console.log('[MS Teams Transcript Downloader] Content script loaded');
+  console.debug('[Transcript Downloader] Content script loaded');
 
   let transcriptUrl = null;
   let transcriptData = null; // Will store the JSON data
@@ -328,7 +328,6 @@
     const disabledButton = document.querySelector('#downloadTranscript');
     
     if (!disabledButton) {
-      console.debug('[Transcript Downloader] Download button not found yet, will retry...');
       return false;
     }
 
@@ -819,7 +818,6 @@
       // <BaseURL>, so cookies + ambient session are sufficient.
       if (track.initUrl) {
         onProgress(done, totalSegs, `Fetching init segment${label}...`);
-        console.debug('[Transcript Downloader] Init segment URL:', track.initUrl);
         const r = await fetch(track.initUrl, { signal });
         if (!r.ok) throw new Error(`Init segment failed: HTTP ${r.status} for ${track.initUrl}`);
         initBufs.push(await decryptIfNeeded(await r.arrayBuffer()));
@@ -842,7 +840,6 @@
             }
             const idx = qIdx++;
             inFlight++;
-            if (idx === 0) console.debug('[Transcript Downloader] First media segment URL:', track.segments[idx]);
             fetch(track.segments[idx], { signal })
               .then(r => {
                 if (!r.ok) throw new Error(`Segment ${idx + 1} failed: HTTP ${r.status} for ${track.segments[idx]}`);
@@ -1731,7 +1728,6 @@
     // rather than inside the transcript panel
     const commandBar = document.querySelector('.ms-CommandBar-primaryCommand');
     if (!commandBar) {
-      console.debug('[Transcript Downloader] Command bar not found yet for video button');
       return false;
     }
 
@@ -2233,7 +2229,12 @@
   }
 
   // Monitor for transcript page and inject buttons
+  let __ttdInitDone = false;
+  let __ttdWatchdogId = null;
   function initialize() {
+    if (__ttdInitDone) return;
+    __ttdInitDone = true;
+
     injectFloatingWidget();
 
     let transcriptDone = injectDownloadButton();
@@ -2242,40 +2243,39 @@
 
     if (transcriptDone && videoDone) {
       console.debug('[Transcript Downloader] Both legacy buttons injected on initial load');
-      return;
-    }
+    } else {
+      // Watch for DOM changes until both legacy buttons are injected (or timeout)
+      const observer = new MutationObserver(() => {
+        // Re-attempt floating widget if document.body wasn't ready earlier
+        if (!document.getElementById('ttdFloatingWidget')) injectFloatingWidget();
 
-    // Watch for DOM changes until both legacy buttons are injected (or timeout)
-    const observer = new MutationObserver(() => {
-      // Re-attempt floating widget if document.body wasn't ready earlier
-      if (!document.getElementById('ttdFloatingWidget')) injectFloatingWidget();
+        if (!transcriptDone) transcriptDone = injectDownloadButton();
+        if (!videoDone) videoDone = injectVideoDownloadButton();
+        updateFloatingWidgetState();
 
-      if (!transcriptDone) transcriptDone = injectDownloadButton();
-      if (!videoDone) videoDone = injectVideoDownloadButton();
-      updateFloatingWidgetState();
+        if (transcriptDone && videoDone) {
+          console.debug('[Transcript Downloader] Both legacy buttons injected after DOM change');
+          observer.disconnect();
+        }
+      });
 
-      if (transcriptDone && videoDone) {
-        console.debug('[Transcript Downloader] Both legacy buttons injected after DOM change');
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      setTimeout(() => {
         observer.disconnect();
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    setTimeout(() => {
-      observer.disconnect();
-      console.debug('[Transcript Downloader] Stopped observing after timeout');
-    }, 30000);
+      }, 30000);
+    }
 
     // Self-healing watchdog: MS Stream / SharePoint shells re-hydrate and
     // sometimes wipe the floating widget after the MutationObserver above has
     // stopped. A cheap periodic check (every 2s) ensures it comes back. Also
     // re-runs updateFloatingWidgetState so positioning catches up if a legacy
     // command bar appears late.
-    setInterval(() => {
+    if (__ttdWatchdogId !== null) clearInterval(__ttdWatchdogId);
+    __ttdWatchdogId = setInterval(() => {
       if (!document.getElementById('ttdFloatingWidget')) injectFloatingWidget();
       else updateFloatingWidgetState();
     }, 2000);
