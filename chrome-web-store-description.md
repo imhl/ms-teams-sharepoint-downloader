@@ -27,23 +27,20 @@ WHERE IT WORKS
 
 VIDEO & AUDIO DOWNLOAD
 
-A red "Download Video" button appears in the top command bar of any recording. Click it and choose how you want to download.
+A red "Download Video" button appears in the top command bar of any recording. Click it, pick a format, and the file lands in your Downloads folder. No external tools.
 
-3 download tools:
-- In Browser (recommended) — Downloads Video+Audio, Audio (M4A), or Video Only directly in the browser. No extra tools needed. A progress bar shows segment-by-segment status. Encrypted segments (SharePoint's newer "SEA" encryption) are decrypted automatically.
-- ffmpeg — Generates a ready-to-paste terminal command. Simple, widely available, sequential.
-- yt-dlp — Generates a parallel-segment command (-N 16), significantly faster for large recordings.
-
-Five format options:
+Three format options:
 🎬 Video + Audio (.mp4) — Best quality, original streams copied
 🎵 Audio Only (.m4a) — Original audio, no re-encoding
-🎵 Audio Only (.mp3) — Universal compatibility (requires ffmpeg or yt-dlp)
-🎵 Audio Only (.wav) — Uncompressed audio (requires ffmpeg or yt-dlp)
 🎬 Video Only (.mp4) — No audio track
 
-If a recording is genuinely DRM-protected (Widevine / PlayReady), the extension detects this and shows a clear dialog instead of producing a broken file. Real DRM content cannot be downloaded by any tool — only by the browser's built-in DRM module during playback.
+Performance:
+- Segments fetched in parallel with a tunable concurrency selector (1 / 2 / 4 / 8 / 16). Default 4 keeps tenant-throttling risk low.
+- Automatic 429 / Retry-After backoff if SharePoint pushes back — no failed downloads from transient throttling.
+- Multi-track mux runs off the UI thread in a Web Worker, so long recordings don't freeze the tab.
+- Encrypted segments (SharePoint's newer "SEA" AES-128-CBC encryption) are decrypted automatically.
 
-Note for CLI commands: the URL contains a temporary auth token that expires after a short window. Generate and run the command promptly.
+If a recording is hard-DRM-protected (Widevine / PlayReady / FairPlay), the extension detects this and shows a clear dialog instead of producing a broken file. Real DRM content cannot be downloaded by any client-side tool — only by the browser's built-in DRM module during playback.
 
 
 TRANSCRIPT DOWNLOAD
@@ -91,7 +88,7 @@ HOW TO USE
 
 1. Install the extension from the Chrome Web Store.
 2. Open a meeting recording or shared video in Teams, SharePoint, or the Stream player.
-3. For video: click "Download Video" in the command bar (or the floating banner). On the Download tab, pick a format and click Download — the file lands in your Downloads folder. Or switch to the ffmpeg / yt-dlp tab to grab a CLI command.
+3. For video: click "Download Video" in the command bar (or the floating banner). Pick a format and click Download — the file lands in your Downloads folder. Tune the "Parallel segment downloads" selector if you want faster (higher) or gentler-on-throttling (lower) downloads.
 4. For transcripts: click the Transcript tab, then "Download Transcript", choose a format, and save.
 
 
@@ -118,8 +115,8 @@ TECHNICAL DETAILS
 - Manifest V3 compliant
 - Works on teams.microsoft.com, teams.cloud.microsoft, and *.sharepoint.com
 - Minimal permissions: storage (for your default format) plus host access
-- In-browser video download covers MP4 and M4A
-- MP3 and WAV download requires ffmpeg or yt-dlp installed locally
+- In-browser video download covers MP4 (video, video+audio) and M4A (audio)
+- DASH-SEA AES-128-CBC segments decrypted with Web Crypto; mux runs in a Web Worker
 
 
 SUPPORT & FEEDBACK

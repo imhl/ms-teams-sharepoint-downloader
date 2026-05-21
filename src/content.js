@@ -1351,7 +1351,7 @@
   }
 
   // ============================================================================
-  // Video Download Button & ffmpeg Modal
+  // Video Download Button & Modal
   // ============================================================================
 
   function injectVideoDownloadButton() {

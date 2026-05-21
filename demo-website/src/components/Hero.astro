@@ -11,7 +11,7 @@ const GH_URL = 'https://github.com/brendangooden/ms-teams-sharepoint-downloader'
         <p class="reveal reveal-1 section-num mb-8 flex flex-wrap gap-x-3 gap-y-1">
           <span>[chrome extension]</span>
           <span class="text-fg-faint">·</span>
-          <span>v1.3.0</span>
+          <span>v1.4.0</span>
           <span class="text-fg-faint">·</span>
           <span>mit</span>
           <span class="text-fg-faint">·</span>
@@ -42,8 +42,8 @@ const GH_URL = 'https://github.com/brendangooden/ms-teams-sharepoint-downloader'
         <!-- Stat row -->
         <dl class="reveal reveal-5 mt-12 grid grid-cols-2 sm:grid-cols-4 border border-border">
           {[
-            { k: '03', v: 'download tools', accent: 'red' },
-            { k: '05', v: 'video formats', accent: 'red' },
+            { k: '16', v: 'max parallel', accent: 'red' },
+            { k: '03', v: 'video formats', accent: 'red' },
             { k: '03', v: 'transcript formats', accent: 'purple' },
             { k: '00', v: 'trackers', accent: 'green' },
           ].map((s) => (
@@ -57,88 +57,35 @@ const GH_URL = 'https://github.com/brendangooden/ms-teams-sharepoint-downloader'
         </dl>
       </div>
 
-      <!-- RIGHT — cycling terminal ──────────────────────── -->
+      <!-- RIGHT — in-browser download terminal ──────────────────────── -->
       <div class="lg:col-span-5 reveal reveal-3">
-        <div class="terminal-cycle">
-
-          <!-- TERMINAL 1: yt-dlp -->
-          <div class="terminal">
-            <div class="terminal-bar">
-              <span class="terminal-dot" style="background: var(--red)"></span>
-              <span class="terminal-dot"></span>
-              <span class="terminal-dot"></span>
-              <span class="ml-2">~ ms-stream &mdash; yt-dlp</span>
-            </div>
-            <pre class="terminal-body"><span class="term-cmd">~ $</span> ms-stream
-
-<span class="term-arrow">▸</span> <span class="term-key">detected  </span> <span class="term-val">SharePoint recording</span>
-<span class="term-arrow">▸</span> <span class="term-key">duration  </span> <span class="term-val">00:47:13</span>
-<span class="term-arrow">▸</span> <span class="term-key">segments  </span> <span class="term-val">1,412</span>
-<span class="term-arrow">▸</span> <span class="term-key">encryption</span> <span class="term-val">SEA</span> <span class="term-comment">— auto-decrypting</span>
-
-<span class="term-arrow">▸</span> <span class="term-comment">generated yt-dlp command (parallel ×16):</span>
-
-  <span class="term-cmd">yt-dlp</span> -N 16 \
-    --add-header <span class="term-val">"Authorization: Bearer eyJ0e..."</span> \
-    <span class="term-val">"https://contoso.sharepoint.com/.../manifest.m3u8"</span> \
-    -o <span class="term-val">"ai-roadmap-2026-03-27.mp4"</span>
-
-<span class="term-arrow">▸</span> <span class="term-comment">ready — paste into terminal</span><span class="term-cursor"></span></pre>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="terminal-dot" style="background: var(--purple)"></span>
+            <span class="terminal-dot"></span>
+            <span class="terminal-dot"></span>
+            <span class="ml-2">~ ms-stream &mdash; in-browser</span>
           </div>
-
-          <!-- TERMINAL 2: ffmpeg -->
-          <div class="terminal">
-            <div class="terminal-bar">
-              <span class="terminal-dot" style="background: var(--red)"></span>
-              <span class="terminal-dot"></span>
-              <span class="terminal-dot"></span>
-              <span class="ml-2">~ ms-stream &mdash; ffmpeg</span>
-            </div>
-            <pre class="terminal-body"><span class="term-cmd">~ $</span> ms-stream
-
-<span class="term-arrow">▸</span> <span class="term-key">detected  </span> <span class="term-val">Teams meeting recording</span>
-<span class="term-arrow">▸</span> <span class="term-key">duration  </span> <span class="term-val">01:02:08</span>
-<span class="term-arrow">▸</span> <span class="term-key">segments  </span> <span class="term-val">1,863</span>
-<span class="term-arrow">▸</span> <span class="term-key">audio out </span> <span class="term-val">.mp3</span> <span class="term-comment">— re-encoded by ffmpeg</span>
-
-<span class="term-arrow">▸</span> <span class="term-comment">generated ffmpeg command:</span>
-
-  <span class="term-cmd">ffmpeg</span> \
-    -headers <span class="term-val">"Authorization: Bearer eyJ0e..."</span> \
-    -i <span class="term-val">"https://contoso.sharepoint.com/.../manifest.m3u8"</span> \
-    -vn -c:a libmp3lame -b:a 192k \
-    <span class="term-val">"weekly-standup.mp3"</span>
-
-<span class="term-arrow">▸</span> <span class="term-comment">ready — paste into terminal</span><span class="term-cursor"></span></pre>
-          </div>
-
-          <!-- TERMINAL 3: in-browser -->
-          <div class="terminal">
-            <div class="terminal-bar">
-              <span class="terminal-dot" style="background: var(--purple)"></span>
-              <span class="terminal-dot"></span>
-              <span class="terminal-dot"></span>
-              <span class="ml-2">~ ms-stream &mdash; in-browser</span>
-            </div>
-            <pre class="terminal-body"><span class="term-cmd">~ $</span> ms-stream
+          <pre class="terminal-body"><span class="term-cmd">~ $</span> ms-stream
 
 <span class="term-arrow">▸</span> <span class="term-key">detected  </span> <span class="term-val">Stream-on-SharePoint</span>
 <span class="term-arrow">▸</span> <span class="term-key">duration  </span> <span class="term-val">00:23:41</span>
 <span class="term-arrow">▸</span> <span class="term-key">segments  </span> <span class="term-val">713</span>
-<span class="term-arrow">▸</span> <span class="term-key">encryption</span> <span class="term-val">SEA</span> <span class="term-comment">— auto-decrypting</span>
+<span class="term-arrow">▸</span> <span class="term-key">encryption</span> <span class="term-val">SEA AES-128-CBC</span> <span class="term-comment">— auto-decrypting</span>
+<span class="term-arrow">▸</span> <span class="term-key">parallel  </span> <span class="term-val">×4</span> <span class="term-comment">— tunable up to ×16, auto-backoff on 429</span>
 
 <span class="term-arrow">▸</span> <span class="term-comment">downloading in-browser...</span>
 
   <span class="term-purple">▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱</span>  <span class="term-val">81%</span>
   <span class="term-key">667.0 MB / 823.1 MB · 38 MB/s</span>
 
+<span class="term-arrow">▸</span> <span class="term-comment">muxing on worker thread &mdash; UI stays responsive</span>
 <span class="term-arrow">▸</span> <span class="term-comment">→ ~/Downloads/team-stream.mp4</span><span class="term-cursor"></span></pre>
-          </div>
         </div>
 
         <p class="mt-3 text-[11px] text-fg-faint flex items-center gap-2">
           <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: var(--green); box-shadow: 0 0 8px var(--green)"></span>
-          live preview &mdash; cycles through all three download tools
+          in-browser download &mdash; parallel, encryption-aware, no external tools
         </p>
       </div>
     </div>

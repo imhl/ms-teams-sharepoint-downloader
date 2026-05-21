@@ -14,8 +14,8 @@ const { stars } = await getRepoStats();
         <ul class="space-y-2 text-[13px]">
           <li><a href={CHROME_URL} target="_blank" rel="noopener" class="lnk">Chrome Web Store</a></li>
           <li><a href="#features" class="lnk">Features</a></li>
-          <li><a href="#cli" class="lnk">CLI tools</a></li>
           <li><a href="#screenshots" class="lnk">Screenshots</a></li>
+          <li><a href="#privacy" class="lnk">Privacy</a></li>
         </ul>
       </div>
       <div>
@@ -24,12 +24,15 @@ const { stars } = await getRepoStats();
           <li>
             <a href={GH_URL} target="_blank" rel="noopener" class="lnk inline-flex items-center gap-1.5">
               <span>Source</span>
-              {stars > 0 && (
-                <span class="inline-flex items-center gap-1 text-yellow" aria-label={`${stars} stars`}>
-                  <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
-                  <span class="text-fg-dim tabular-nums">{formatCount(stars)}</span>
-                </span>
-              )}
+              <span
+                class="inline-flex items-center gap-1 text-yellow"
+                aria-label={stars > 0 ? `${stars} stars` : undefined}
+                data-gh-stars-badge
+                hidden={stars === 0}
+              >
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+                <span class="text-fg-dim tabular-nums" data-gh-stars-count>{formatCount(stars)}</span>
+              </span>
             </a>
           </li>
           <li><a href={`${GH_URL}/issues`} target="_blank" rel="noopener" class="lnk">Issues</a></li>
@@ -60,7 +63,7 @@ const { stars } = await getRepoStats();
       <div class="grid grid-cols-2 md:grid-cols-5 text-[11px]">
         <div class="px-4 py-3 border-r border-b md:border-b-0 border-border">
           <span class="text-fg-faint block">version</span>
-          <span class="text-fg">v1.3.0</span>
+          <span class="text-fg">v1.4.0</span>
         </div>
         <div class="px-4 py-3 border-r border-b md:border-b-0 border-border">
           <span class="text-fg-faint block">license</span>

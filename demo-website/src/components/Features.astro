@@ -1,12 +1,12 @@
 ---
 const video = [
-  { t: 'In-browser', d: 'Video+Audio MP4, Audio M4A, or Video Only. No CLI needed.' },
-  { t: 'CLI generators', d: 'ffmpeg & yt-dlp commands ready to paste. yt-dlp goes parallel (-N 16).' },
-  { t: 'SEA encryption', d: "SharePoint's encrypted segments decrypted on the fly." },
-  { t: 'Five formats', d: '.mp4 (V+A) · .m4a · .mp3 · .wav · video-only.' },
+  { t: 'In-browser', d: 'Video+Audio MP4, Audio M4A, or Video Only. No external tools.' },
+  { t: 'Parallel fetching', d: 'Tunable 1–16 concurrent segments. Default 4 keeps throttling risk low.' },
+  { t: 'Auto-backoff', d: "429s respected with Retry-After. Transient throttling won't fail the download." },
+  { t: 'SEA decryption', d: "SharePoint's AES-128-CBC encrypted segments decrypted in-flight." },
+  { t: 'Worker-thread mux', d: 'Multi-track mux runs off the UI thread. Long recordings never freeze the tab.' },
   { t: 'Editable filename', d: 'Auto-derived from the meeting title. Edit before save.' },
   { t: 'Progress bar', d: 'Per-segment status. Cancellable. No corrupt partials.' },
-  { t: 'Floating banner', d: 'Appears when SharePoint hides the command bar.' },
   { t: 'DRM detection', d: 'Widevine/PlayReady → clear dialog, never a broken file.' },
 ];
 
@@ -38,7 +38,7 @@ const transcript = [
       <div class="border-b lg:border-b-0 lg:border-r border-border">
         <header class="px-6 py-5 border-b border-border flex items-baseline justify-between">
           <h3 class="font-display text-[1.75rem] leading-none text-red">video &amp; audio</h3>
-          <span class="section-num">.mp4 · .m4a · .mp3 · .wav</span>
+          <span class="section-num">.mp4 · .m4a</span>
         </header>
         <ul>
           {video.map((f, i) => (

@@ -69,5 +69,76 @@ const canonical = new URL(pathname, Astro.site).toString();
   </head>
   <body>
     <slot />
+
+    <!--
+      GitHub star-count hydration. The page is statically prerendered, so the
+      server-side `getRepoStats()` call freezes the count at build time. This
+      tiny client-side script refreshes both badges on load and caches the
+      result in sessionStorage for ~1h so we don't get rate-limited (60/hr/IP
+      on unauthenticated GitHub API).
+    -->
+    <script is:inline>
+      (function () {
+        var REPO = 'brendangooden/ms-teams-sharepoint-downloader';
+        var CACHE_KEY = 'gh-stars:' + REPO;
+        var TTL_MS = 60 * 60 * 1000;
+
+        function fmt(n) {
+          if (n < 1000) return String(n);
+          return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+        }
+
+        function applyCount(n) {
+          if (typeof n !== 'number' || isNaN(n)) return;
+          var formatted = fmt(n);
+          document.querySelectorAll('[data-gh-stars-count]').forEach(function (el) {
+            el.textContent = formatted;
+          });
+          document.querySelectorAll('[data-gh-stars-badge]').forEach(function (el) {
+            if (n > 0) el.removeAttribute('hidden');
+            else el.setAttribute('hidden', '');
+            if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', n + ' stars');
+          });
+          document.querySelectorAll('[data-gh-stars-sep]').forEach(function (el) {
+            if (n > 0) el.removeAttribute('hidden');
+            else el.setAttribute('hidden', '');
+          });
+          document.querySelectorAll('[data-gh-link]').forEach(function (el) {
+            el.setAttribute('aria-label', n > 0 ? 'View on GitHub — ' + n + ' stars' : 'View on GitHub');
+          });
+        }
+
+        function fetchAndCache() {
+          fetch('https://api.github.com/repos/' + REPO, {
+            headers: { Accept: 'application/vnd.github+json' },
+          })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+              if (!d || typeof d.stargazers_count !== 'number') return;
+              try {
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                  count: d.stargazers_count,
+                  ts: Date.now(),
+                }));
+              } catch (_) {}
+              applyCount(d.stargazers_count);
+            })
+            .catch(function () { /* silent — leave build-time value */ });
+        }
+
+        try {
+          var raw = sessionStorage.getItem(CACHE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && Date.now() - parsed.ts < TTL_MS) {
+              applyCount(parsed.count);
+              return;
+            }
+          }
+        } catch (_) {}
+
+        fetchAndCache();
+      })();
+    </script>
   </body>
 </html>

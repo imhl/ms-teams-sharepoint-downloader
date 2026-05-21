@@ -16,7 +16,7 @@ Works on:
 
 ### Video / Audio download
 - **In-browser download** — Video+Audio (MP4), Audio Only (M4A), or Video Only. No extra tools needed.
-- **CLI fallback** — ffmpeg and yt-dlp tabs generate ready-to-paste commands for power users who want MP3/WAV or to drive the download from a terminal.
+- **Parallel segment fetching** — tunable concurrency (1–16 segments at once) with automatic backoff if SharePoint throttles. Multi-threaded mux off the UI thread.
 - **Editable filename** — auto-derived from the page title.
 - **Floating banner widget** as a fallback for when the SharePoint command bar re-renders or hides the button.
 
@@ -63,8 +63,8 @@ Open <https://chromewebstore.google.com/detail/ms-teams-transcript-downl/hmljlkh
 
 1. Open any meeting recording or shared MP4 in Teams, SharePoint, or the Stream-on-SharePoint player.
 2. Click the red **Download Video** button in the command bar (or in the floating banner at the top of the page).
-3. The modal opens on the **Download** tab — pick a format and click **Download**.
-4. *Optional:* switch to the **ffmpeg** or **yt-dlp** tab for MP3/WAV or to drive the download from your terminal. CLI commands embed a short-lived auth token, so generate and run them promptly.
+3. Pick a format and click **Download**. The file lands in your Downloads folder.
+4. *Optional:* tune the **Parallel segment downloads** selector (default 4) — higher = faster, but increases the chance of SharePoint throttling. 429s are auto-retried.
 
 ### Downloading the transcript
 
@@ -119,11 +119,11 @@ src/
 
 - Chrome / Edge only (Manifest V3).
 - Only works when you can actually view the content in the native UI — it cannot bypass access restrictions.
-- MP3 / WAV require ffmpeg or yt-dlp installed locally (the browser path covers MP4 and M4A).
+- Output formats are MP4 (video, video+audio) and M4A (audio only). MP3 / WAV are no longer supported — Microsoft now AES-128-CBC encrypts SharePoint Stream segments, and no external CLI tool (ffmpeg, yt-dlp, etc.) can handle the resulting fragments. Transcode in-browser-downloaded files locally if you need a different format.
 
 ### Will NOT work in these scenarios
 
-- **DRM-protected videos.** Microsoft DRM-protects some recordings; the bytes can only be decrypted by the browser's built-in DRM module during playback. Neither this extension nor ffmpeg / yt-dlp can produce a playable file. The extension detects this and shows a clear dialog rather than producing a broken download.
+- **DRM-protected videos.** Microsoft hard-DRM-protects some recordings; the bytes can only be decrypted by the browser's built-in DRM module during playback. No client-side tool can produce a playable file. The extension detects this and shows a clear dialog rather than producing a broken download.
 - **Guest / unauthenticated viewers.** When SharePoint refuses to mint tokens for guests, the segment downloads fail even though the native player still plays the video. Sign in as a tenant member, or ask the owner to share the file directly via OneDrive.
 
 ## License

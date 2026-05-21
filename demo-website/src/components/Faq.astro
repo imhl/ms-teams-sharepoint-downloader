@@ -13,8 +13,12 @@ const faqs = [
     a: 'No, and no tool does. Widevine/PlayReady decrypt only inside the browser\'s DRM module. The extension detects it and shows a clear dialog.',
   },
   {
-    q: 'Do I need ffmpeg or yt-dlp?',
-    a: 'Only for MP3/WAV, or for parallel downloads on long recordings. The default in-browser path handles MP4 and M4A with no external tools.',
+    q: 'Can I generate MP3 or WAV?',
+    a: 'Not anymore. Microsoft now AES-128-CBC encrypts SharePoint Stream segments and no CLI tool (ffmpeg, yt-dlp, etc.) can handle the fragments. Download MP4 or M4A in-browser, then transcode locally if you need a different format.',
+  },
+  {
+    q: 'How fast is the in-browser download?',
+    a: 'Segments fetch in parallel (default 4, tunable up to 16) over a single HTTP/2 connection. Multi-track mux runs on a Web Worker so the UI never freezes. 429s are auto-retried with exponential backoff — transient throttling won\'t fail the download.',
   },
   {
     q: 'Is anything sent to a third-party server?',
@@ -42,7 +46,7 @@ const faqs = [
   <div class="mx-auto max-w-[1280px] px-6 lg:px-10 py-20 lg:py-28">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-14">
       <div class="lg:col-span-4">
-        <p class="section-num">07 / faq</p>
+        <p class="section-num">06 / faq</p>
       </div>
       <div class="lg:col-span-8">
         <div class="border border-border">
