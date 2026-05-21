@@ -1882,45 +1882,6 @@
     return document.title.replace(/[^a-z0-9\s]/gi, '_').trim() || 'video';
   }
 
-  function buildDownloadCommand(manifestUrl, filename, format, tool) {
-    const safeFilename = filename.replace(/[^a-z0-9_\s-]/gi, '_');
-
-    // Microsoft's .svc.ms CDN now requires the `x-spopactoken` bearer alongside
-    // the URL-signed P1-P4 tokens (TempAuthRemoval rollout). Without it the
-    // manifest fetch returns HTTP 401 (NoAccessToken). Inject the captured
-    // token as a custom header so the CLI tools can authenticate.
-    const tokenHeader = videoSpopActoken ? `X-Spopactoken: ${videoSpopActoken}` : '';
-
-    const ffmpegCommands = {
-      'video-audio': { flags: '-map 0:v:0 -map 0:a:0 -c copy', ext: '.mp4' },
-      'audio-m4a':   { flags: '-map 0:a:0 -vn -c:a copy',      ext: '.m4a' },
-      'audio-mp3':   { flags: '-map 0:a:0 -vn',                 ext: '.mp3' },
-      'audio-wav':   { flags: '-map 0:a:0 -vn',                 ext: '.wav' },
-      'video-only':  { flags: '-map 0:v:0 -an -c:v copy',       ext: '.mp4' }
-    };
-
-    if (tool === 'yt-dlp') {
-      const ytdlpFormats = {
-        'video-audio': { flags: '-N 16',                                    ext: '.mp4' },
-        'audio-m4a':   { flags: '-N 16 -x --audio-format m4a',             ext: '.m4a' },
-        'audio-mp3':   { flags: '-N 16 -x --audio-format mp3',             ext: '.mp3' },
-        'audio-wav':   { flags: '-N 16 -x --audio-format wav',             ext: '.wav' },
-        'video-only':  { flags: '-N 16 --no-audio',                        ext: '.mp4' }
-      };
-      const config = ytdlpFormats[format];
-      if (!config) return '';
-      const ytdlpHeader = tokenHeader ? `--add-header "${tokenHeader}" ` : '';
-      return `yt-dlp ${ytdlpHeader}${config.flags} -o "${safeFilename}${config.ext}" "${manifestUrl}"`;
-    }
-
-    // Default: ffmpeg. -headers must precede -i. ffmpeg accepts a single header
-    // value without a trailing CRLF.
-    const config = ffmpegCommands[format];
-    if (!config) return '';
-    const ffmpegHeader = tokenHeader ? `-headers "${tokenHeader}" ` : '';
-    return `ffmpeg ${ffmpegHeader}-i "${manifestUrl}" ${config.flags} "${safeFilename}${config.ext}"`;
-  }
-
   function createVideoModal() {
     const modal = document.createElement('div');
     modal.id = 'videoDownloadModal';
@@ -1930,14 +1891,6 @@
     const browserFormats = [
       { id: 'video-audio', title: 'Video + Audio', badge: '.mp4', icon: '&#127916;' },
       { id: 'audio-m4a', title: 'Audio (M4A)', badge: '.m4a', icon: '&#127925;' },
-      { id: 'video-only', title: 'Video Only', badge: '.mp4', icon: '&#127910;' }
-    ];
-
-    const cliFormats = [
-      { id: 'video-audio', title: 'Video + Audio', badge: '.mp4', icon: '&#127916;' },
-      { id: 'audio-m4a', title: 'Audio (M4A)', badge: '.m4a', icon: '&#127925;' },
-      { id: 'audio-mp3', title: 'Audio (MP3)', badge: '.mp3', icon: '&#127925;' },
-      { id: 'audio-wav', title: 'Audio (WAV)', badge: '.wav', icon: '&#127925;' },
       { id: 'video-only', title: 'Video Only', badge: '.mp4', icon: '&#127910;' }
     ];
 
@@ -1974,55 +1927,19 @@
           </div>
         </div>
 
-        <div class="video-tab-bar">
-          <button class="video-tab-btn active" data-tab="download">Download <span class="video-tab-hint">in browser</span></button>
-          <button class="video-tab-btn" data-tab="ffmpeg">ffmpeg <span class="video-tab-hint">CLI</span></button>
-          <button class="video-tab-btn" data-tab="yt-dlp">yt-dlp <span class="video-tab-hint">CLI</span></button>
+        <div class="video-format-cards">
+          ${renderCards(browserFormats, 'dl')}
+        </div>
+        <button class="browser-dl-action-btn" id="browserDlActionBtn" disabled>Select a format above</button>
+        <div class="browser-download-section" id="browserDownloadSection" style="display: none; margin-top: 12px;">
+          <div class="browser-dl-progress-bar-wrap">
+            <div class="browser-dl-progress-bar" id="browserDlProgressBar" style="width:0%"></div>
+          </div>
+          <div class="browser-dl-status" id="browserDlStatus"></div>
         </div>
 
-        <!-- Download Tab -->
-        <div class="video-tab-panel active" data-panel="download">
-          <div class="video-format-cards">
-            ${renderCards(browserFormats, 'dl')}
-          </div>
-          <button class="browser-dl-action-btn" id="browserDlActionBtn" disabled>Select a format above</button>
-          <div class="browser-download-section" id="browserDownloadSection" style="display: none; margin-top: 12px;">
-            <div class="browser-dl-progress-bar-wrap">
-              <div class="browser-dl-progress-bar" id="browserDlProgressBar" style="width:0%"></div>
-            </div>
-            <div class="browser-dl-status" id="browserDlStatus"></div>
-          </div>
-        </div>
 
-        <!-- ffmpeg Tab -->
-        <div class="video-tab-panel" data-panel="ffmpeg">
-          <div class="video-info-warning">
-            Copy the command below and run it in your terminal. The URL contains a temporary auth token that will expire.
-          </div>
-          <div class="video-format-cards">
-            ${renderCards(cliFormats, 'ffmpeg')}
-          </div>
-          <div class="ffmpeg-command-section" id="ffmpegCommandSection" style="display: none;">
-            <label class="filename-label"><span class="label-text">Command:</span></label>
-            <div class="ffmpeg-command" id="ffmpegCommandText"></div>
-            <button class="ffmpeg-copy-btn" id="ffmpegCopyBtn">Copy Command</button>
-          </div>
-        </div>
 
-        <!-- yt-dlp Tab -->
-        <div class="video-tab-panel" data-panel="yt-dlp">
-          <div class="video-info-warning">
-            Copy the command below and run it in your terminal. The URL contains a temporary auth token that will expire.
-          </div>
-          <div class="video-format-cards">
-            ${renderCards(cliFormats, 'ytdlp')}
-          </div>
-          <div class="ffmpeg-command-section" id="ytdlpCommandSection" style="display: none;">
-            <label class="filename-label"><span class="label-text">Command:</span></label>
-            <div class="ffmpeg-command" id="ytdlpCommandText"></div>
-            <button class="ffmpeg-copy-btn" id="ytdlpCopyBtn">Copy Command</button>
-          </div>
-        </div>
 
         <div class="modal-actions">
           <a class="modal-star-link" href="https://github.com/brendangooden/ms-teams-sharepoint-downloader" target="_blank" rel="noopener noreferrer" title="Star this project on GitHub">
@@ -2039,20 +1956,8 @@
 
     let abortController = null;
 
-    // Tab switching
-    const tabBtns = modal.querySelectorAll('.video-tab-btn');
-    const tabPanels = modal.querySelectorAll('.video-tab-panel');
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabPanels.forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        modal.querySelector(`[data-panel="${btn.getAttribute('data-tab')}"]`).classList.add('active');
-      });
-    });
-
-    // --- Download tab logic ---
-    const dlCards = modal.querySelectorAll('[data-panel="download"] .video-format-card');
+    // --- Download logic ---
+    const dlCards = modal.querySelectorAll('.video-format-card');
     const dlBtn = modal.querySelector('#browserDlActionBtn');
     let selectedBrowserFormat = null;
 
@@ -2132,90 +2037,6 @@
         dlBtn.classList.remove('browser-dl-cancelling');
         dlCards.forEach(c => { c.style.pointerEvents = ''; c.style.opacity = ''; });
       }
-    });
-
-    // --- ffmpeg tab logic ---
-    const ffmpegCards = modal.querySelectorAll('[data-panel="ffmpeg"] .video-format-card');
-    let selectedFfmpegFormat = null;
-
-    function updateFfmpegCommand() {
-      if (!selectedFfmpegFormat) return;
-      const filename = modal.querySelector('#videoFilenameInput').value.trim() || 'video';
-      const cmd = buildDownloadCommand(videoManifestUrl, filename, selectedFfmpegFormat, 'ffmpeg');
-      const section = modal.querySelector('#ffmpegCommandSection');
-      const text = modal.querySelector('#ffmpegCommandText');
-      text.textContent = cmd;
-      section.style.display = 'block';
-      modal.querySelector('#ffmpegCopyBtn').textContent = 'Copy Command';
-    }
-
-    ffmpegCards.forEach(card => {
-      card.addEventListener('click', () => {
-        ffmpegCards.forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        selectedFfmpegFormat = card.getAttribute('data-format');
-        updateFfmpegCommand();
-      });
-    });
-
-    modal.querySelector('#ffmpegCopyBtn').addEventListener('click', () => {
-      const text = modal.querySelector('#ffmpegCommandText').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = modal.querySelector('#ffmpegCopyBtn');
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Copy Command'; }, 2000);
-      }).catch(() => {
-        const range = document.createRange();
-        range.selectNodeContents(modal.querySelector('#ffmpegCommandText'));
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-      });
-    });
-
-    // --- yt-dlp tab logic ---
-    const ytdlpCards = modal.querySelectorAll('[data-panel="yt-dlp"] .video-format-card');
-    let selectedYtdlpFormat = null;
-
-    function updateYtdlpCommand() {
-      if (!selectedYtdlpFormat) return;
-      const filename = modal.querySelector('#videoFilenameInput').value.trim() || 'video';
-      const cmd = buildDownloadCommand(videoManifestUrl, filename, selectedYtdlpFormat, 'yt-dlp');
-      const section = modal.querySelector('#ytdlpCommandSection');
-      const text = modal.querySelector('#ytdlpCommandText');
-      text.textContent = cmd;
-      section.style.display = 'block';
-      modal.querySelector('#ytdlpCopyBtn').textContent = 'Copy Command';
-    }
-
-    ytdlpCards.forEach(card => {
-      card.addEventListener('click', () => {
-        ytdlpCards.forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        selectedYtdlpFormat = card.getAttribute('data-format');
-        updateYtdlpCommand();
-      });
-    });
-
-    modal.querySelector('#ytdlpCopyBtn').addEventListener('click', () => {
-      const text = modal.querySelector('#ytdlpCommandText').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = modal.querySelector('#ytdlpCopyBtn');
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Copy Command'; }, 2000);
-      }).catch(() => {
-        const range = document.createRange();
-        range.selectNodeContents(modal.querySelector('#ytdlpCommandText'));
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-      });
-    });
-
-    // Filename input updates commands live
-    modal.querySelector('#videoFilenameInput').addEventListener('input', () => {
-      updateFfmpegCommand();
-      updateYtdlpCommand();
     });
 
     // Close handlers — abort any in-progress browser download before hiding
