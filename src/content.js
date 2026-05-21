@@ -1971,6 +1971,14 @@
       });
     });
 
+    const defaultCard = modal.querySelector('.video-format-card[data-format="video-audio"]');
+    if (defaultCard) {
+      defaultCard.classList.add('selected');
+      selectedBrowserFormat = 'video-audio';
+      dlBtn.disabled = false;
+      dlBtn.textContent = '\u2193 Download';
+    }
+
     dlBtn.addEventListener('click', async () => {
       if (!selectedBrowserFormat) return;
 
