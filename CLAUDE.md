@@ -27,3 +27,17 @@ Verify the result with `unzip -l ms-teams-downloader-v<version>.zip` — expect 
 
 - Never add `chrome.cookies` permission or a background service worker to extract SharePoint session cookies, even to "improve" CLI tool support. Tested: segment URLs require `FedAuth` + `rtFa` (HttpOnly) and baking those into a copy-paste script exposes the user's full session. The in-browser path is the only one we support.
 - Don't bring back the ffmpeg / yt-dlp tabs in the video modal. Microsoft now DASH-SEA AES-128-CBC encrypts Stream segments; yt-dlp refuses all `<ContentProtection>` streams as DRM, and ffmpeg's DASH demuxer doesn't implement DASH-SEA. The modal note states this — don't soften it.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues at `brendangooden/ms-teams-sharepoint-downloader` via `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical defaults (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — one `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
