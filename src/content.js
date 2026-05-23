@@ -977,6 +977,95 @@
     return _muxWorkerBlobUrl;
   }
 
+  // Cross-browser strategy for handing track buffers to the mux worker.
+  //
+  // Chrome accepts a list of fetched ArrayBuffers as transferables and the
+  // UI thread releases its references — avoids 1-2 full copies of
+  // (video + audio) bytes during mux. For a 1 GB recording that's roughly
+  // the difference between ~3 GB and ~1 GB peak across UI + worker.
+  //
+  // Firefox content scripts produce ArrayBuffers (from crypto.subtle.decrypt,
+  // Response.arrayBuffer, etc.) that report constructor.name === "ArrayBuffer"
+  // and have a valid byteLength, but fail `b instanceof ArrayBuffer` because
+  // the prototype chain crosses an Xray-wrapper realm boundary. The previous
+  // `b instanceof ArrayBuffer ? b : b.buffer` shape silently produced
+  // `undefined` for every entry (plain ArrayBuffers have no `.buffer`), which
+  // surfaced downstream as the MSG_NOT_OBJECT "Element of argument 2 is not
+  // an object." postMessage error from PR #10 / issue #9 — the sparse arrays
+  // were the actual defect, the transferables coercion was just where it blew
+  // up. We now use `Object.prototype.toString.call` for the type check, which
+  // reads Symbol.toStringTag (preserved across realms) instead of walking the
+  // prototype chain.
+  let _transferablesSupported = null;
+
+  function isArrayBufferLike(b) {
+    return b != null && Object.prototype.toString.call(b) === '[object ArrayBuffer]';
+  }
+
+  function normalizeToArrayBuffer(b) {
+    if (b == null) return null;
+    if (isArrayBufferLike(b)) return b;
+    if (ArrayBuffer.isView(b)) return b.buffer;
+    return null;
+  }
+
+  function buildTransferList(arrays) {
+    const list = [];
+    const seen = new Set();
+    const skipped = { nullish: 0, nonObject: 0, nonArrayBuffer: 0, duplicate: 0, skippedSamples: [] };
+    let total = 0;
+    for (const arr of arrays) {
+      for (const b of arr) {
+        total++;
+        if (b == null) { skipped.nullish++; if (skipped.skippedSamples.length < 3) skipped.skippedSamples.push(typeof b); continue; }
+        if (typeof b !== 'object') { skipped.nonObject++; if (skipped.skippedSamples.length < 3) skipped.skippedSamples.push(typeof b); continue; }
+        const ab = normalizeToArrayBuffer(b);
+        if (!isArrayBufferLike(ab)) { skipped.nonArrayBuffer++; if (skipped.skippedSamples.length < 3) skipped.skippedSamples.push((b && b.constructor && b.constructor.name) || typeof b); continue; }
+        if (seen.has(ab)) { skipped.duplicate++; continue; }
+        seen.add(ab);
+        list.push(ab);
+      }
+    }
+    return { list, total, skipped };
+  }
+
+  let _muxPathLogged = false;
+  function postChunksToWorker(worker, videoChunks, audioChunks) {
+    if (_transferablesSupported !== false) {
+      try {
+        const videoBufs = videoChunks.map(normalizeToArrayBuffer);
+        const audioBufs = audioChunks.map(normalizeToArrayBuffer);
+        const built = buildTransferList([videoBufs, audioBufs]);
+        if (built.skipped.nullish || built.skipped.nonObject || built.skipped.nonArrayBuffer || built.skipped.duplicate) {
+          console.warn('[Transcript Downloader] mux transfer list had non-ArrayBuffer entries filtered out:', {
+            total: built.total,
+            transferred: built.list.length,
+            ...built.skipped
+          });
+        }
+        worker.postMessage({ video: videoBufs, audio: audioBufs }, built.list);
+        if (!_muxPathLogged) {
+          console.log('[Transcript Downloader] mux: using transferables path (' + built.list.length + ' buffers transferred)');
+          _muxPathLogged = true;
+        }
+        _transferablesSupported = true;
+        return;
+      } catch (e) {
+        console.warn('[Transcript Downloader] mux: transferables path threw, falling back to structured clone:', e && (e.message || e));
+        _transferablesSupported = false;
+        // Fall through.
+      }
+    }
+
+    const videoBufs = videoChunks.map(b => b.slice(0));
+    const audioBufs = audioChunks.map(b => b.slice(0));
+    worker.postMessage({ video: videoBufs, audio: audioBufs });
+    if (!_muxPathLogged) {
+      console.log('[Transcript Downloader] mux: using structured-clone path (' + (videoBufs.length + audioBufs.length) + ' buffers copied)');
+      _muxPathLogged = true;
+    }
+  }
+
   async function muxTracks(videoChunks, audioChunks, onProgress) {
     const workerUrl = await getMuxWorkerUrl();
     return await new Promise((resolve, reject) => {
@@ -998,12 +1087,8 @@
         reject(new Error(e.message || 'mux-worker crashed'));
       };
 
-      const videoBufs = videoChunks.map(b => b.slice(0));
-      const audioBufs = audioChunks.map(b => b.slice(0));
-
       try {
-        // Use 'video'/'audio' — that's what the worker destructures from event.data
-        worker.postMessage({ video: videoBufs, audio: audioBufs });
+        postChunksToWorker(worker, videoChunks, audioChunks);
       } catch (error) {
         worker.terminate();
         reject(error);
