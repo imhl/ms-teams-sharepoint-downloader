@@ -1,6 +1,6 @@
 *.pem
 *.zip
 .claude/settings.local.json
-scripts/
+/scripts/
 RELEASE_NOTES.md
 releases/
